@@ -1,0 +1,4 @@
+google-api-python-client==2.151.0
+tweepy==4.14.0
+python-dotenv==1.0.1
+slack-sdk==3.40.1

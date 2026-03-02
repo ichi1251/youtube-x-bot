@@ -1,0 +1,51 @@
+name: Post - Slack返信確認 → Xポスト
+
+on:
+  schedule:
+    - cron: '0 0 * * *'    # 09:00 JST (00:00 UTC) → 案1
+    - cron: '0 3 * * *'    # 12:00 JST (03:00 UTC) → 案2
+    - cron: '0 9 * * *'    # 18:00 JST (09:00 UTC) → 案3
+  workflow_dispatch:        # 手動実行も可能
+
+env:
+  TZ: Asia/Tokyo
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # pending_posts.json を更新コミットするため
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: post 実行（Slack返信確認 → Xポスト）
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          POST_TIMES: ${{ vars.POST_TIMES || '09:00,12:00,18:00' }}
+          POST_INTERVAL_SECONDS: ${{ vars.POST_INTERVAL_SECONDS || '60' }}
+        run: python main.py --mode post
+
+      - name: pending_posts.json をコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pending_posts.json
+          git diff --staged --quiet || git commit -m "chore: update pending_posts [skip ci]"
+          git push

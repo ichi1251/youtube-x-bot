@@ -1,0 +1,58 @@
+name: Draft - YouTube検索 → Slack送信
+
+on:
+  schedule:
+    - cron: '0 22 * * *'   # 毎日 07:00 JST (22:00 UTC)
+  workflow_dispatch:        # 手動実行も可能
+
+env:
+  TZ: Asia/Tokyo
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # pending_posts.json をコミットするため
+
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Python をセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 依存パッケージをインストール
+        run: pip install -r requirements.txt
+
+      - name: draft 実行（YouTube検索 → Slack送信）
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SEARCH_DAYS: ${{ vars.SEARCH_DAYS || '7' }}
+          MAX_RESULTS: ${{ vars.MAX_RESULTS || '50' }}
+          TOP_N: ${{ vars.TOP_N || '3' }}
+          POST_TIMES: ${{ vars.POST_TIMES || '09:00,12:00,18:00' }}
+          CATEGORY_SCHEDULE_MON: ${{ vars.CATEGORY_SCHEDULE_MON || '28' }}
+          CATEGORY_SCHEDULE_TUE: ${{ vars.CATEGORY_SCHEDULE_TUE || '27' }}
+          CATEGORY_SCHEDULE_WED: ${{ vars.CATEGORY_SCHEDULE_WED || '26' }}
+          CATEGORY_SCHEDULE_THU: ${{ vars.CATEGORY_SCHEDULE_THU || '24' }}
+          CATEGORY_SCHEDULE_FRI: ${{ vars.CATEGORY_SCHEDULE_FRI || '22' }}
+          CATEGORY_SCHEDULE_SAT: ${{ vars.CATEGORY_SCHEDULE_SAT || '20' }}
+          CATEGORY_SCHEDULE_SUN: ${{ vars.CATEGORY_SCHEDULE_SUN || '25' }}
+        run: python main.py --mode draft
+
+      - name: pending_posts.json をコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pending_posts.json
+          git diff --staged --quiet || git commit -m "chore: update pending_posts [skip ci]"
+          git push
