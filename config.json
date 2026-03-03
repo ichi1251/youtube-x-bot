@@ -1,0 +1,16 @@
+{
+  "category_schedule": {
+    "MON": "28",
+    "TUE": "28",
+    "WED": "26",
+    "THU": "24",
+    "FRI": "22",
+    "SAT": "26",
+    "SUN": "22"
+  },
+  "search_days": 7,
+  "max_results": 50,
+  "top_n": 3,
+  "post_interval_seconds": 60,
+  "post_times": ["09:00", "12:00", "18:00"]
+}

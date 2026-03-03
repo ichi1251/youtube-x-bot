@@ -36,17 +36,6 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-          SEARCH_DAYS: ${{ vars.SEARCH_DAYS || '7' }}
-          MAX_RESULTS: ${{ vars.MAX_RESULTS || '50' }}
-          TOP_N: ${{ vars.TOP_N || '3' }}
-          POST_TIMES: ${{ vars.POST_TIMES || '09:00,12:00,18:00' }}
-          CATEGORY_SCHEDULE_MON: ${{ vars.CATEGORY_SCHEDULE_MON || '28' }}
-          CATEGORY_SCHEDULE_TUE: ${{ vars.CATEGORY_SCHEDULE_TUE || '27' }}
-          CATEGORY_SCHEDULE_WED: ${{ vars.CATEGORY_SCHEDULE_WED || '26' }}
-          CATEGORY_SCHEDULE_THU: ${{ vars.CATEGORY_SCHEDULE_THU || '24' }}
-          CATEGORY_SCHEDULE_FRI: ${{ vars.CATEGORY_SCHEDULE_FRI || '22' }}
-          CATEGORY_SCHEDULE_SAT: ${{ vars.CATEGORY_SCHEDULE_SAT || '20' }}
-          CATEGORY_SCHEDULE_SUN: ${{ vars.CATEGORY_SCHEDULE_SUN || '25' }}
         run: python main.py --mode draft
 
       - name: pending_posts.json をコミット

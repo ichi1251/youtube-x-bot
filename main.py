@@ -55,7 +55,13 @@ def load_config(args: argparse.Namespace) -> dict:
 
     dry_run = args.dry_run or os.getenv("DRY_RUN", "false").lower() == "true"
 
-    # 曜日スケジュール（月〜日の順）
+    # config.json から設定を読み込む
+    config_path = Path(__file__).parent / "config.json"
+    if not config_path.exists():
+        logger.error("config.json が見つかりません")
+        sys.exit(1)
+    cfg = json.loads(config_path.read_text(encoding="utf-8"))
+
     WEEKDAY_KEYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     CATEGORY_NAMES = {
         "20": "ゲーム", "22": "人物・ブログ", "23": "コメディ",
@@ -63,19 +69,12 @@ def load_config(args: argparse.Namespace) -> dict:
         "26": "ハウツー・スタイル", "27": "教育",
         "28": "科学・テクノロジー", "29": "社会活動",
     }
-    DEFAULT_SCHEDULE = {
-        "MON": "28", "TUE": "27", "WED": "26",
-        "THU": "24", "FRI": "22", "SAT": "20", "SUN": "25",
-    }
-    schedule = {
-        day: os.getenv(f"CATEGORY_SCHEDULE_{day}", DEFAULT_SCHEDULE[day])
-        for day in WEEKDAY_KEYS
-    }
+
+    schedule = cfg.get("category_schedule", {})
     today_key = WEEKDAY_KEYS[datetime.now().weekday()]
-    category_id = args.category or schedule[today_key]
+    category_id = args.category or schedule.get(today_key, "28")
     category_name = CATEGORY_NAMES.get(category_id, f"カテゴリ{category_id}")
 
-    # キーワードモードへのフォールバック（--keywords 指定時のみ）
     keywords_raw = args.keywords or ""
     keywords = [k.strip() for k in keywords_raw.split(",") if k.strip()]
 
@@ -92,11 +91,11 @@ def load_config(args: argparse.Namespace) -> dict:
         "category_name": category_name,
         "today_key": today_key,
         "schedule": schedule,
-        "days": int(os.getenv("SEARCH_DAYS", "7")),
-        "max_results": int(os.getenv("MAX_RESULTS", "50")),
-        "top_n": int(os.getenv("TOP_N", "3")),
-        "post_interval": int(os.getenv("POST_INTERVAL_SECONDS", "60")),
-        "post_times": [t.strip() for t in os.getenv("POST_TIMES", "09:00,12:00,18:00").split(",")],
+        "days": cfg.get("search_days", 7),
+        "max_results": cfg.get("max_results", 50),
+        "top_n": cfg.get("top_n", 3),
+        "post_interval": cfg.get("post_interval_seconds", 60),
+        "post_times": cfg.get("post_times", ["09:00", "12:00", "18:00"]),
         "dry_run": dry_run,
         "mode": args.mode,
     }

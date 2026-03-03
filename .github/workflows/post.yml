@@ -38,8 +38,6 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
-          POST_TIMES: ${{ vars.POST_TIMES || '09:00,12:00,18:00' }}
-          POST_INTERVAL_SECONDS: ${{ vars.POST_INTERVAL_SECONDS || '60' }}
         run: python main.py --mode post
 
       - name: pending_posts.json をコミット
