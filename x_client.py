@@ -26,14 +26,14 @@ def build_tweet(video: VideoInfo) -> str:
     pub_date = video.published_at[:10]
 
     body_template = (
-        "🔥 急上昇動画ピックアップ\n\n"
-        "📺 {title}\n\n"
-        "👤 {channel}\n"
-        "👁 再生数: {views}回\n"
-        "👥 登録者数: {subs}人\n"
-        "📊 比率: {ratio}倍\n"
-        "📅 公開日: {date}\n\n"
-        "▶️ {url}"
+        "急上昇動画ピックアップ\n\n"
+        "{title}\n\n"
+        "ch: {channel}\n"
+        "再生数: {views}回\n"
+        "登録者数: {subs}人\n"
+        "比率: {ratio}倍\n"
+        "公開日: {date}\n\n"
+        "{url}"
     )
 
     full_text = body_template.format(
