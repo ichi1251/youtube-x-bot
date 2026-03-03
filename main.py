@@ -201,6 +201,7 @@ def run_post(config: dict):
             continue
 
         logger.info("「%s」→ 返信あり、Xにポスト", title)
+        logger.info("送信テキスト（%d文字）:\n%s", len(post_text), post_text)
         try:
             response = xc.client.create_tweet(text=post_text)
             tweet_id = response.data["id"]
