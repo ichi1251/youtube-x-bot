@@ -81,6 +81,12 @@ class YouTubeClient:
             ids = self._search_by_category(category_id, published_after, max_results)
             all_video_ids.extend(ids)
             logger.info("カテゴリID「%s」: %d件取得", category_id, len(ids))
+            # 0件の場合はカテゴリなしの急上昇にフォールバック
+            if not ids:
+                logger.warning("カテゴリID=%s で0件。カテゴリなし急上昇にフォールバック", category_id)
+                ids = self._search_most_popular_no_category(published_after, max_results)
+                all_video_ids.extend(ids)
+                logger.info("カテゴリなし急上昇: %d件取得", len(ids))
         elif keywords:
             for keyword in keywords:
                 ids = self._search_by_keyword(keyword, published_after, max_results)
@@ -154,6 +160,28 @@ class YouTubeClient:
             return [item["id"]["videoId"] for item in response.get("items", [])]
         except HttpError as e:
             logger.error("YouTube search.list フォールバックエラー (category=%s): %s", category_id, e)
+            return []
+
+    def _search_most_popular_no_category(
+        self,
+        published_after: str,
+        max_results: int,
+    ) -> list[str]:
+        """カテゴリ指定なしで日本の急上昇動画を取得"""
+        try:
+            response = self.service.videos().list(
+                part="id,snippet",
+                chart="mostPopular",
+                regionCode="JP",
+                maxResults=min(max_results, 50),
+            ).execute()
+            items = response.get("items", [])
+            return [
+                item["id"] for item in items
+                if item["snippet"]["publishedAt"] >= published_after
+            ]
+        except HttpError as e:
+            logger.error("YouTube mostPopular（カテゴリなし）取得エラー: %s", e)
             return []
 
     def _search_by_keyword(
