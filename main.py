@@ -159,18 +159,6 @@ def run_draft(config: dict):
 # ──────────────────────────────────────────
 # post モード: 現在時刻に対応するスロットをSlack返信確認 → Xにポスト
 # ──────────────────────────────────────────
-def _match_time_slot(post_times: list[str], tolerance_min: int = 15) -> int | None:
-    """現在時刻に一致するスロットのインデックスを返す。なければ None。"""
-    now = datetime.now()
-    now_total = now.hour * 60 + now.minute
-    for slot, t in enumerate(post_times):
-        h, m = map(int, t.split(":"))
-        target_total = h * 60 + m
-        if abs(now_total - target_total) <= tolerance_min:
-            return slot
-    return None
-
-
 def run_post(config: dict):
     logger.info("=== post モード開始 ===")
 
@@ -180,32 +168,12 @@ def run_post(config: dict):
 
     pending = json.loads(PENDING_FILE.read_text(encoding="utf-8"))
     if not pending:
-        logger.warning("pending_posts.json が空です。終了します。")
+        logger.info("pending_posts.json が空です。終了します。")
         return
 
     if not config["slack_token"] or not config["slack_channel"]:
         logger.error(".env に SLACK_BOT_TOKEN / SLACK_CHANNEL_ID が設定されていません")
         sys.exit(1)
-
-    # 現在時刻に対応するスロットを特定
-    post_times = config["post_times"]
-    slot = _match_time_slot(post_times)
-    if slot is None:
-        now_str = datetime.now().strftime("%H:%M")
-        logger.warning(
-            "現在時刻 %s はどのポスト時刻にも一致しません（設定: %s、許容±15分）",
-            now_str, ", ".join(post_times)
-        )
-        return
-
-    # 対象スロットの pending を探す
-    target = next((item for item in pending if item.get("time_slot") == slot), None)
-    if target is None:
-        logger.warning("スロット %d（%s）に対応する投稿案がありません", slot, post_times[slot])
-        return
-
-    logger.info("スロット %d（%s）の投稿案をポスト: 「%s」",
-                slot + 1, post_times[slot], target.get("title", "")[:30])
 
     if config["dry_run"]:
         logger.info("[DRY RUN] 返信確認・ポストをスキップ")
@@ -219,14 +187,20 @@ def run_post(config: dict):
         access_token_secret=config["x_access_token_secret"],
     )
 
-    ts = target["ts"]
-    draft_text = target["draft"]
-    action, post_text = sc.get_reply_decision(ts, draft_text)
+    remaining = []
+    for item in pending:
+        ts = item["ts"]
+        draft_text = item["draft"]
+        title = item.get("title", "")[:30]
 
-    if action == "skip":
-        logger.info("→ スキップ")
-        sc.post_result_notification(ts, tweet_url=None, skipped=True)
-    else:
+        action, post_text = sc.get_reply_decision(ts, draft_text)
+
+        if action == "skip":
+            logger.info("「%s」→ 返信なし、次回に持ち越し", title)
+            remaining.append(item)
+            continue
+
+        logger.info("「%s」→ 返信あり、Xにポスト", title)
         try:
             response = xc.client.create_tweet(text=post_text)
             tweet_id = response.data["id"]
@@ -236,9 +210,8 @@ def run_post(config: dict):
         except Exception as e:
             logger.error("→ Xポストエラー: %s", e)
             sc.post_result_notification(ts, tweet_url=None, skipped=False)
+            remaining.append(item)
 
-    # ポスト済み（成功・失敗・スキップ問わず）を pending から削除
-    remaining = [item for item in pending if item.get("time_slot") != slot]
     PENDING_FILE.write_text(json.dumps(remaining, ensure_ascii=False, indent=2), encoding="utf-8")
     logger.info("=== post 完了（残り %d 件） ===", len(remaining))
 

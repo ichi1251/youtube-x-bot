@@ -2,9 +2,7 @@ name: Post - Slack返信確認 → Xポスト
 
 on:
   schedule:
-    - cron: '0 0 * * *'    # 09:00 JST (00:00 UTC) → 案1
-    - cron: '0 3 * * *'    # 12:00 JST (03:00 UTC) → 案2
-    - cron: '0 9 * * *'    # 18:00 JST (09:00 UTC) → 案3
+    - cron: '*/10 * * * *'  # 10分おきに実行
   workflow_dispatch:        # 手動実行も可能
 
 env:
