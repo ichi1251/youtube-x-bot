@@ -27,14 +27,6 @@ jobs:
       - name: 依存パッケージをインストール
         run: pip install -r requirements.txt
 
-      - name: X API 認証テスト
-        env:
-          X_API_KEY: ${{ secrets.X_API_KEY }}
-          X_API_SECRET: ${{ secrets.X_API_SECRET }}
-          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
-          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
-        run: python test_x.py
-
       - name: post 実行（Slack返信確認 → Xポスト）
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
