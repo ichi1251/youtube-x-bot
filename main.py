@@ -209,6 +209,8 @@ def run_post(config: dict):
             sc.post_result_notification(ts, tweet_url=tweet_url, skipped=False)
         except Exception as e:
             logger.error("→ Xポストエラー: %s", e)
+            if hasattr(e, 'response') and e.response is not None:
+                logger.error("→ エラー詳細: %s", e.response.text)
             sc.post_result_notification(ts, tweet_url=None, skipped=False)
             remaining.append(item)
 
