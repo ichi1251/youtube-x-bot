@@ -107,7 +107,7 @@ class YouTubeClient:
         """
         videos.list(chart=mostPopular) でカテゴリ別の人気動画を取得し、
         published_after 以降に公開されたものだけに絞る。
-        search.list の videoCategoryId は不安定なため、こちらを使用。
+        404エラー（JPで未対応カテゴリ）の場合は search.list にフォールバック。
         """
         try:
             response = self.service.videos().list(
@@ -124,7 +124,36 @@ class YouTubeClient:
                 if item["snippet"]["publishedAt"] >= published_after
             ]
         except HttpError as e:
+            if e.resp.status == 404:
+                logger.warning(
+                    "カテゴリID=%s は JP の mostPopular 非対応。search.list にフォールバック",
+                    category_id,
+                )
+                return self._search_by_category_fallback(category_id, published_after, max_results)
             logger.error("YouTube mostPopular 取得エラー (category=%s): %s", category_id, e)
+            return []
+
+    def _search_by_category_fallback(
+        self,
+        category_id: str,
+        published_after: str,
+        max_results: int,
+    ) -> list[str]:
+        """search.list + videoCategoryId でカテゴリ検索（フォールバック用）"""
+        try:
+            response = self.service.search().list(
+                part="id",
+                type="video",
+                videoCategoryId=category_id,
+                publishedAfter=published_after,
+                maxResults=min(max_results, 50),
+                order="viewCount",
+                regionCode="JP",
+                relevanceLanguage="ja",
+            ).execute()
+            return [item["id"]["videoId"] for item in response.get("items", [])]
+        except HttpError as e:
+            logger.error("YouTube search.list フォールバックエラー (category=%s): %s", category_id, e)
             return []
 
     def _search_by_keyword(
