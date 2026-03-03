@@ -21,10 +21,18 @@ client = tweepy.Client(
     access_token_secret=access_token_secret,
 )
 
+# 読み取りテスト
 try:
     me = client.get_me()
-    print("認証成功:", me)
+    print("読み取り認証成功:", me)
 except tweepy.TweepyException as e:
-    print("認証失敗:", e)
+    print("読み取り失敗:", e)
+
+# 書き込みテスト
+try:
+    response = client.create_tweet(text="テスト投稿（自動化テスト）")
+    print("書き込み成功:", response)
+except tweepy.TweepyException as e:
+    print("書き込み失敗:", e)
     if hasattr(e, 'response') and e.response is not None:
         print("レスポンス詳細:", e.response.text)
