@@ -66,6 +66,8 @@ class YouTubeClient:
         max_results: int = 50,
         keywords: list[str] | None = None,
         category_id: str | None = None,
+        max_subscriber_count: int | None = None,
+        min_duration_seconds: int = 60,
     ) -> list[VideoInfo]:
         """
         キーワードまたはカテゴリで動画を検索し、再生数 > 登録者数の動画を返す。
@@ -87,6 +89,10 @@ class YouTubeClient:
                 ids = self._search_most_popular_no_category(published_after, max_results)
                 all_video_ids.extend(ids)
                 logger.info("カテゴリなし急上昇: %d件取得", len(ids))
+        elif not keywords:
+            ids = self._search_most_popular_no_category(published_after, max_results)
+            all_video_ids.extend(ids)
+            logger.info("カテゴリなし急上昇: %d件取得", len(ids))
         elif keywords:
             for keyword in keywords:
                 ids = self._search_by_keyword(keyword, published_after, max_results)
@@ -100,7 +106,7 @@ class YouTubeClient:
             return []
 
         videos = self._fetch_video_details(unique_ids)
-        filtered = self._filter_and_enrich(videos)
+        filtered = self._filter_and_enrich(videos, max_subscriber_count, min_duration_seconds)
         filtered.sort(key=lambda v: v.ratio, reverse=True)
         return filtered
 
@@ -221,24 +227,30 @@ class YouTubeClient:
                 logger.error("YouTube videos.list エラー: %s", e)
         return results
 
-    def _filter_and_enrich(self, videos: list[dict]) -> list[VideoInfo]:
+    def _filter_and_enrich(
+        self,
+        videos: list[dict],
+        max_subscriber_count: int | None = None,
+        min_duration_seconds: int = 60,
+    ) -> list[VideoInfo]:
         """
         以下の条件で絞り込んで VideoInfo リストを返す:
-          1. ショート動画を除外（60秒以下 または タイトルに #shorts/#short）
+          1. 短い動画を除外（min_duration_seconds未満 または タイトルに #shorts/#short）
           2. 日本語タイトルのみ（ひらがな・カタカナ・漢字を含む）
           3. 再生数 > チャンネル登録者数
+          4. 登録者数が max_subscriber_count 以下（指定時）
         """
         # ショート・日本語フィルタを先に適用してAPIコール数を削減
         pre_filtered = []
         for v in videos:
             title = v["snippet"]["title"]
 
-            # --- ショート除外 ---
+            # --- 短い動画を除外 ---
             duration_sec = _parse_duration(
                 v.get("contentDetails", {}).get("duration", "PT0S")
             )
-            if duration_sec <= 60:
-                logger.debug("ショート除外（%d秒）: %s", duration_sec, title)
+            if duration_sec < min_duration_seconds:
+                logger.debug("短い動画除外（%d秒）: %s", duration_sec, title)
                 continue
             if re.search(r'#shorts?\b', title, re.IGNORECASE):
                 logger.debug("ショート除外（タイトル）: %s", title)
@@ -266,6 +278,10 @@ class YouTubeClient:
 
             # 登録者数が非公開のチャンネルはスキップ
             if subscriber_count == 0:
+                continue
+
+            if max_subscriber_count and subscriber_count > max_subscriber_count:
+                logger.debug("登録者数超過除外（%d人）: %s", subscriber_count, v["snippet"]["title"])
                 continue
 
             if view_count > subscriber_count:

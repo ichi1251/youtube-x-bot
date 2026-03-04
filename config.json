@@ -1,4 +1,5 @@
 {
+  "use_category": false,
   "category_schedule": {
     "MON": "28",
     "TUE": "28",
@@ -8,6 +9,8 @@
     "SAT": "26",
     "SUN": "22"
   },
+  "max_subscriber_count": 50000,
+  "min_duration_seconds": 300,
   "search_days": 7,
   "max_results": 50,
   "top_n": 3,

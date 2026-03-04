@@ -72,8 +72,11 @@ def load_config(args: argparse.Namespace) -> dict:
 
     schedule = cfg.get("category_schedule", {})
     today_key = WEEKDAY_KEYS[datetime.now().weekday()]
-    category_id = args.category or schedule.get(today_key, "28")
-    category_name = CATEGORY_NAMES.get(category_id, f"カテゴリ{category_id}")
+    if cfg.get("use_category", True) and not args.category:
+        category_id = schedule.get(today_key, "28")
+    else:
+        category_id = args.category or None
+    category_name = CATEGORY_NAMES.get(category_id, f"カテゴリ{category_id}") if category_id else "カテゴリなし"
 
     keywords_raw = args.keywords or ""
     keywords = [k.strip() for k in keywords_raw.split(",") if k.strip()]
@@ -94,6 +97,8 @@ def load_config(args: argparse.Namespace) -> dict:
         "days": cfg.get("search_days", 7),
         "max_results": cfg.get("max_results", 50),
         "top_n": cfg.get("top_n", 3),
+        "max_subscriber_count": cfg.get("max_subscriber_count", None),
+        "min_duration_seconds": cfg.get("min_duration_seconds", 60),
         "post_interval": cfg.get("post_interval_seconds", 60),
         "post_times": cfg.get("post_times", ["09:00", "12:00", "18:00"]),
         "dry_run": dry_run,
@@ -120,6 +125,8 @@ def run_draft(config: dict):
         max_results=config["max_results"],
         keywords=config["keywords"] or None,
         category_id=config["category_id"] if not config["keywords"] else None,
+        max_subscriber_count=config["max_subscriber_count"],
+        min_duration_seconds=config["min_duration_seconds"],
     )
 
     if not videos:
