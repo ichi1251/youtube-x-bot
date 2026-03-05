@@ -65,6 +65,7 @@ class YouTubeClient:
         days: int,
         max_results: int = 50,
         keywords: list[str] | None = None,
+        category_ids: list[str] | None = None,
         category_id: str | None = None,
         max_subscriber_count: int | None = None,
         min_duration_seconds: int = 60,
@@ -79,20 +80,13 @@ class YouTubeClient:
 
         all_video_ids: list[str] = []
 
-        if category_id:
-            ids = self._search_by_category(category_id, published_after, max_results)
-            all_video_ids.extend(ids)
-            logger.info("カテゴリID「%s」: %d件取得", category_id, len(ids))
-            # 0件の場合はカテゴリなしの急上昇にフォールバック
-            if not ids:
-                logger.warning("カテゴリID=%s で0件。カテゴリなし急上昇にフォールバック", category_id)
-                ids = self._search_most_popular_no_category(published_after, max_results)
+        # 複数カテゴリ検索
+        target_categories = category_ids or ([category_id] if category_id else [])
+        if target_categories:
+            for cat_id in target_categories:
+                ids = self._search_by_category(cat_id, published_after, max_results)
                 all_video_ids.extend(ids)
-                logger.info("カテゴリなし急上昇: %d件取得", len(ids))
-        elif not keywords:
-            ids = self._search_all_by_view_count(published_after, max_results)
-            all_video_ids.extend(ids)
-            logger.info("再生数順検索: %d件取得", len(ids))
+                logger.info("カテゴリID「%s」: %d件取得", cat_id, len(ids))
         elif keywords:
             for keyword in keywords:
                 ids = self._search_by_keyword(keyword, published_after, max_results)

@@ -1,14 +1,6 @@
 {
-  "use_category": false,
-  "category_schedule": {
-    "MON": "28",
-    "TUE": "28",
-    "WED": "26",
-    "THU": "24",
-    "FRI": "22",
-    "SAT": "26",
-    "SUN": "22"
-  },
+  "use_category": true,
+  "search_categories": ["22", "23", "24", "25", "26", "27", "28", "29"],
   "max_subscriber_count": 50000,
   "min_duration_seconds": 300,
   "search_days": 2,

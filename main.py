@@ -70,13 +70,8 @@ def load_config(args: argparse.Namespace) -> dict:
         "28": "科学・テクノロジー", "29": "社会活動",
     }
 
-    schedule = cfg.get("category_schedule", {})
     today_key = WEEKDAY_KEYS[datetime.now().weekday()]
-    if cfg.get("use_category", True) and not args.category:
-        category_id = schedule.get(today_key, "28")
-    else:
-        category_id = args.category or None
-    category_name = CATEGORY_NAMES.get(category_id, f"カテゴリ{category_id}") if category_id else "カテゴリなし"
+    search_categories = cfg.get("search_categories", []) if cfg.get("use_category", True) else []
 
     keywords_raw = args.keywords or ""
     keywords = [k.strip() for k in keywords_raw.split(",") if k.strip()]
@@ -90,15 +85,13 @@ def load_config(args: argparse.Namespace) -> dict:
         "slack_token": os.getenv("SLACK_BOT_TOKEN", ""),
         "slack_channel": os.getenv("SLACK_CHANNEL_ID", ""),
         "keywords": keywords,
-        "category_id": category_id,
-        "category_name": category_name,
+        "search_categories": search_categories,
         "today_key": today_key,
-        "schedule": schedule,
-        "days": cfg.get("search_days", 7),
+        "days": cfg.get("search_days", 2),
         "max_results": cfg.get("max_results", 50),
-        "top_n": cfg.get("top_n", 3),
+        "top_n": cfg.get("top_n", 10),
         "max_subscriber_count": cfg.get("max_subscriber_count", None),
-        "min_duration_seconds": cfg.get("min_duration_seconds", 60),
+        "min_duration_seconds": cfg.get("min_duration_seconds", 300),
         "post_interval": cfg.get("post_interval_seconds", 60),
         "post_times": cfg.get("post_times", ["09:00", "12:00", "18:00"]),
         "dry_run": dry_run,
@@ -120,11 +113,12 @@ def run_draft(config: dict):
                 config["today_key"], config["category_name"], config["category_id"])
 
     yt = YouTubeClient(config["youtube_api_key"])
+    categories = config["search_categories"] if not config["keywords"] else []
     videos = yt.search_videos(
         days=config["days"],
         max_results=config["max_results"],
         keywords=config["keywords"] or None,
-        category_id=config["category_id"] if not config["keywords"] else None,
+        category_ids=categories or None,
         max_subscriber_count=config["max_subscriber_count"],
         min_duration_seconds=config["min_duration_seconds"],
     )
