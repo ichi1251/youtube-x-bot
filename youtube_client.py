@@ -195,7 +195,7 @@ class YouTubeClient:
         published_after: str,
         max_results: int,
     ) -> list[str]:
-        """直近に公開された日本語動画を新着順で取得し、フィルタで絞り込む"""
+        """直近に公開された動画を新着順で取得（日本語フィルタは後処理）"""
         try:
             response = self.service.search().list(
                 part="id",
@@ -203,8 +203,6 @@ class YouTubeClient:
                 publishedAfter=published_after,
                 maxResults=min(max_results, 50),
                 order="date",
-                regionCode="JP",
-                relevanceLanguage="ja",
             ).execute()
             return [item["id"]["videoId"] for item in response.get("items", [])]
         except HttpError as e:
