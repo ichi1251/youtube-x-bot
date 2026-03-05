@@ -195,20 +195,20 @@ class YouTubeClient:
         published_after: str,
         max_results: int,
     ) -> list[str]:
-        """急上昇チャートに縛られず、直近の再生数順で日本語動画を検索"""
+        """直近に公開された日本語動画を新着順で取得し、フィルタで絞り込む"""
         try:
             response = self.service.search().list(
                 part="id",
                 type="video",
                 publishedAfter=published_after,
                 maxResults=min(max_results, 50),
-                order="viewCount",
+                order="date",
                 regionCode="JP",
                 relevanceLanguage="ja",
             ).execute()
             return [item["id"]["videoId"] for item in response.get("items", [])]
         except HttpError as e:
-            logger.error("YouTube 再生数順検索エラー: %s", e)
+            logger.error("YouTube 新着検索エラー: %s", e)
             return []
 
     def _search_by_keyword(
