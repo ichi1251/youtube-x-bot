@@ -3,7 +3,7 @@
   "search_categories": ["22", "23", "24", "25", "26", "27", "28", "29"],
   "max_subscriber_count": 50000,
   "min_duration_seconds": 300,
-  "search_days": 2,
+  "search_days": 7,
   "max_results": 50,
   "top_n": 10,
   "post_interval_seconds": 60,
