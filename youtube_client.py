@@ -197,6 +197,7 @@ class YouTubeClient:
     ) -> list[str]:
         """直近に公開された動画を新着順で取得（日本語フィルタは後処理）"""
         try:
+            logger.info("検索パラメータ: publishedAfter=%s, maxResults=%d", published_after, max_results)
             response = self.service.search().list(
                 part="id",
                 type="video",
@@ -204,7 +205,9 @@ class YouTubeClient:
                 maxResults=min(max_results, 50),
                 order="date",
             ).execute()
-            return [item["id"]["videoId"] for item in response.get("items", [])]
+            items = response.get("items", [])
+            logger.info("APIレスポンス: %d件, nextPageToken=%s", len(items), response.get("nextPageToken", "なし"))
+            return [item["id"]["videoId"] for item in items]
         except HttpError as e:
             logger.error("YouTube 新着検索エラー: %s", e)
             return []
