@@ -109,8 +109,8 @@ def run_draft(config: dict):
         logger.error(".env に SLACK_BOT_TOKEN / SLACK_CHANNEL_ID が設定されていません")
         sys.exit(1)
 
-    logger.info("本日（%s）のカテゴリ: %s (ID=%s)",
-                config["today_key"], config["category_name"], config["category_id"])
+    logger.info("本日（%s）検索カテゴリ: %s",
+                config["today_key"], config["search_categories"])
 
     yt = YouTubeClient(config["youtube_api_key"])
     categories = config["search_categories"] if not config["keywords"] else []
@@ -226,8 +226,8 @@ def run_post(config: dict):
 def run_direct(config: dict):
     logger.info("=== direct モード開始 ===")
 
-    logger.info("本日（%s）のカテゴリ: %s (ID=%s)",
-                config["today_key"], config["category_name"], config["category_id"])
+    logger.info("本日（%s）検索カテゴリ: %s",
+                config["today_key"], config["search_categories"])
 
     yt = YouTubeClient(config["youtube_api_key"])
     videos = yt.search_videos(
