@@ -90,9 +90,9 @@ class YouTubeClient:
                 all_video_ids.extend(ids)
                 logger.info("カテゴリなし急上昇: %d件取得", len(ids))
         elif not keywords:
-            ids = self._search_most_popular_no_category(published_after, max_results)
+            ids = self._search_all_by_view_count(published_after, max_results)
             all_video_ids.extend(ids)
-            logger.info("カテゴリなし急上昇: %d件取得", len(ids))
+            logger.info("再生数順検索: %d件取得", len(ids))
         elif keywords:
             for keyword in keywords:
                 ids = self._search_by_keyword(keyword, published_after, max_results)
@@ -188,6 +188,27 @@ class YouTubeClient:
             ]
         except HttpError as e:
             logger.error("YouTube mostPopular（カテゴリなし）取得エラー: %s", e)
+            return []
+
+    def _search_all_by_view_count(
+        self,
+        published_after: str,
+        max_results: int,
+    ) -> list[str]:
+        """急上昇チャートに縛られず、直近の再生数順で日本語動画を検索"""
+        try:
+            response = self.service.search().list(
+                part="id",
+                type="video",
+                publishedAfter=published_after,
+                maxResults=min(max_results, 50),
+                order="viewCount",
+                regionCode="JP",
+                relevanceLanguage="ja",
+            ).execute()
+            return [item["id"]["videoId"] for item in response.get("items", [])]
+        except HttpError as e:
+            logger.error("YouTube 再生数順検索エラー: %s", e)
             return []
 
     def _search_by_keyword(
