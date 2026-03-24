@@ -1,8 +1,8 @@
 name: Post - Slack返信確認 → Xポスト
 
 on:
-  schedule:
-    - cron: '*/10 * * * *'  # 10分おきに実行
+  # schedule:
+  #   - cron: '*/10 * * * *'  # 10分おきに実行  ← 一時停止中
   workflow_dispatch:        # 手動実行も可能
 
 env:

@@ -1,8 +1,8 @@
 name: Draft - YouTube検索 → Slack送信
 
 on:
-  schedule:
-    - cron: '0 22 * * *'   # 毎日 07:00 JST (22:00 UTC)
+  # schedule:
+  #   - cron: '0 22 * * *'   # 毎日 07:00 JST (22:00 UTC)  ← 一時停止中
   workflow_dispatch:        # 手動実行も可能
 
 env:
